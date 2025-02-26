@@ -1,0 +1,6 @@
+displayName: Client Authentication
+type: middleware
+import: github.com/NicatorBa/TraefikClientAuth
+summary: Provides client certificate authentication as middleware
+testData:
+  caFiles:
