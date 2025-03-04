@@ -1,7 +1,6 @@
 package clientauth
 
 import (
-	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -187,8 +186,7 @@ func createCerts(clientNotAfter time.Time) (*certs, error) {
 		return nil, err
 	}
 
-	caPEM := new(bytes.Buffer)
-	pem.Encode(caPEM, &pem.Block{
+	caPEM := pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: caBytes,
 	})
@@ -215,19 +213,17 @@ func createCerts(clientNotAfter time.Time) (*certs, error) {
 		return nil, err
 	}
 
-	serverPrivKeyPEM := new(bytes.Buffer)
-	pem.Encode(serverPrivKeyPEM, &pem.Block{
+	serverPrivKeyPEM := pem.EncodeToMemory(&pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(serverPrivKey),
 	})
 
-	serverPEM := new(bytes.Buffer)
-	pem.Encode(serverPEM, &pem.Block{
+	serverPEM := pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: serverBytes,
 	})
 
-	serverKeyPair, err := tls.X509KeyPair(serverPEM.Bytes(), serverPrivKeyPEM.Bytes())
+	serverKeyPair, err := tls.X509KeyPair(serverPEM, serverPrivKeyPEM)
 	if err != nil {
 		return nil, err
 	}
@@ -253,25 +249,23 @@ func createCerts(clientNotAfter time.Time) (*certs, error) {
 		return nil, err
 	}
 
-	clientPrivKeyPEM := new(bytes.Buffer)
-	pem.Encode(clientPrivKeyPEM, &pem.Block{
+	clientPrivKeyPEM := pem.EncodeToMemory(&pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(clientPrivKey),
 	})
 
-	clientPEM := new(bytes.Buffer)
-	pem.Encode(clientPEM, &pem.Block{
+	clientPEM := pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: clientBytes,
 	})
 
-	clientKeyPair, err := tls.X509KeyPair(clientPEM.Bytes(), clientPrivKeyPEM.Bytes())
+	clientKeyPair, err := tls.X509KeyPair(clientPEM, clientPrivKeyPEM)
 	if err != nil {
 		return nil, err
 	}
 
 	cas := x509.NewCertPool()
-	cas.AppendCertsFromPEM(caPEM.Bytes())
+	cas.AppendCertsFromPEM(caPEM)
 
 	serverTlsConfig := &tls.Config{
 		ClientAuth:   tls.RequestClientCert,
